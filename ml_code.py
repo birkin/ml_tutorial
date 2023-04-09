@@ -100,3 +100,77 @@ for idx in np.arange(20):
     ax.set_title(classes[labels[idx].item()])
     
 plt.show()  ## needed, on mac, to see images
+
+
+## Instantiate the model --------------------------------------------
+
+model = models.alexnet(pretrained=True)  ## "Downloading: "https://download.pytorch.org/models/alexnet-owt-7be5be79.pth" to /path/to/.cache/torch/hub/checkpoints/alexnet-owt-7be5be79.pth"
+log.debug( f'model, ``{model}``' )
+"""
+UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, 
+    please use 'weights' instead.
+UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. 
+    The current behavior is equivalent to passing `weights=AlexNet_Weights.IMAGENET1K_V1`. 
+    You can also use `weights=AlexNet_Weights.DEFAULT` to get the most up-to-date weights.
+"""
+
+log.debug( f'classifier[6] input features, ``{ model.classifier[6].in_features}``' )
+log.debug( f'classifier[6] output features, ``{ model.classifier[6].out_features}``' )
+
+## Prevent the feature-extraction part of the network from being updated during training
+for param in model.parameters():
+    param.requires_grad = False
+"""
+- In this context, the code snippet is used to "freeze" the feature extraction part 
+    of a pre-trained neural network. 
+- By setting param.requires_grad to False, the gradients for those parameters 
+    will not be computed during backpropagation, and thus, their values will not be updated 
+    during the optimization process. 
+- This is typically done when you want to use the pre-trained feature extraction part as-is 
+    and only train the remaining layers, e.g., the classifier part of the network, 
+    for a new task (transfer learning).
+(Thanks, chatGPT!)
+"""
+
+## Replace the last layer of the classifier with our current 5-class classifier
+n_inputs = model.classifier[6].in_features
+last_layer = nn.Linear(n_inputs, len(classes))
+model.classifier[6] = last_layer
+model.to(device)
+log.debug( f'after update, classifier[6] input features, ``{ model.classifier[6].in_features}``' )
+log.debug( f'after update, classifier[6] output features, ``{ model.classifier[6].out_features}``' )
+
+
+## Define the loss function and optimizer ----------------------------
+
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
+
+
+"""
+chatGPT prompt...
+
+Describe, to a 7th-grader, an overview of the concepts: 
+- "loss function", 
+- "optimizer" (in this machine-learning context), 
+- "cross-entropy loss"
+- "stochastic gradient descent technique"
+- "first and second-order moment estimation"
+
+Feel free to use up to ten paragraphs.
+
+---
+
+- Loss Function:
+    Imagine you're playing a game where you need to throw a ball into a basket. The "loss function" is like a scorekeeper that tells you how far off your throw was from the target. In machine learning, a loss function measures the difference between the model's predictions and the actual answers (like the correct labels for images). The goal is to minimize this difference so that the model makes better predictions.
+- Optimizer:
+    An "optimizer" is like a coach who helps you improve your throws in the game. In machine learning, an optimizer is an algorithm that helps the model learn by making small adjustments to the model's parameters. These adjustments help to reduce the difference between the model's predictions and the actual answers, ultimately making the model more accurate.
+- Cross-Entropy Loss:
+    "Cross-entropy loss" is a specific type of loss function used for problems where the model has to choose between different categories (like identifying which animal is in a picture). It measures how well the model's predicted probabilities match the actual probabilities of the correct categories. A lower cross-entropy loss means the model is doing a better job at predicting the right categories.
+- Stochastic Gradient Descent Technique:
+    Imagine you're trying to find the shortest path down a hill while blindfolded. One way to do this is to feel the slope of the ground beneath your feet and take small steps in the direction that goes downhill. "Stochastic Gradient Descent" (SGD) is a similar technique in machine learning that helps the optimizer find the best way to adjust the model's parameters. It does this by using information from the loss function to figure out which direction will minimize the difference between the model's predictions and the actual answers.
+- First and Second-Order Moment Estimation:
+    In our hill example, "first-order moment estimation" is like feeling the slope of the ground to determine which way is downhill. It tells you the average direction that the model's parameters should be adjusted. "Second-order moment estimation" is like feeling the bumps and dips in the ground, which helps you understand how quickly the slope is changing. Combining these two pieces of information can help the optimizer make better adjustments to the model's parameters.
+- To sum up, when training a machine learning model, we need a way to measure how well the model is doing (loss function) and a method to help it improve (optimizer). In this case, the cross-entropy loss function measures the difference between the model's predictions and the correct answers for classification problems, and the Adam optimizer uses the stochastic gradient descent technique, along with first and second-order moment estimation, to make smart adjustments to the model's parameters. All of these concepts work together to help the model learn and make better predictions.
+"""
+log.debug( 'hereZZZ' )
