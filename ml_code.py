@@ -1,4 +1,4 @@
-import logging
+import logging, time
 
 import torch
 import matplotlib.pyplot as plt
@@ -87,28 +87,16 @@ def im_convert( tensor ):
 
 classes = ('daisy', 'dandelion', 'roses', 'sunflowers', 'tulips')
 
-# dataiter = iter(train_loader)
-# images, labels = dataiter.next()
-# fig = plt.figure(figsize=(25, 4))
-# for idx in np.arange(20):
-#     ax = fig.add_subplot(2, 10, idx+1, xticks=[], yticks=[])
-#     plt.imshow(im_convert(images[idx]))
-#     ax.set_title( classes[labels[idx].item()] )
-
-
 dataiter = iter(train_loader)
-# images, labels = dataiter.next()
+# images, labels = dataiter.next()  # ```AttributeError: '_SingleProcessDataLoaderIter' object has no attribute 'next'```
 images, labels = next( dataiter )
-
-"""
-Results in error...
-```AttributeError: '_SingleProcessDataLoaderIter' object has no attribute 'next'```
-See <https://github.com/CompVis/metric-learning-divide-and-conquer/issues/12#issuecomment-733830625>`
-"""
 
 fig = plt.figure(figsize=(25, 4))
 
 for idx in np.arange(20):
-  ax = fig.add_subplot(2, 10, idx+1, xticks=[], yticks=[])
-  plt.imshow(im_convert(images[idx]))
-  ax.set_title(classes[labels[idx].item()])
+    log.debug( f'idx, ``{idx}``' )
+    ax = fig.add_subplot(2, 10, idx+1, xticks=[], yticks=[])
+    plt.imshow(im_convert(images[idx]))
+    ax.set_title(classes[labels[idx].item()])
+    
+plt.show()  ## needed, on mac, to see images
