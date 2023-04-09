@@ -56,3 +56,28 @@ transform_train, ``Compose(
     Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
 )``
 """
+transform = transforms.Compose(
+    [   transforms.Resize((224,224)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ]
+)
+log.debug( f'transform, ``{transform}``' )
+"""
+Yields...
+transform, ``Compose(
+    Resize(size=(224, 224), interpolation=bilinear, max_size=None, antialias=warn)
+    ToTensor()
+    Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+)``
+"""
+
+
+## next...
+train_dataset = datasets.ImageFolder('../flower_photos/train', transform=transform_train)
+val_dataset = datasets.ImageFolder('../flower_photos/test', transform=transform)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = batch_size, shuffle=False)
+
+log.debug( f'train_dataset, ``{train_dataset}``' )
+log.debug( f'val_dataset, ``{val_dataset}``' )
