@@ -1,0 +1,4 @@
+matplotlib==3.7.1
+numpy==1.24.2
+pip-tools==6.13.0
+torchvision==0.15.1
