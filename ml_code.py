@@ -68,8 +68,12 @@ transform, ``Compose(
 
 train_dataset = datasets.ImageFolder('../flower_photos/train', transform=transform_train)
 val_dataset = datasets.ImageFolder('../flower_photos/test', transform=transform)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = batch_size, shuffle=False)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)  # type: ignore
+# log.debug( f'type(train_loader), ``{type(train_loader)}``' )
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = batch_size, shuffle=False)  # type: ignore
+# log.debug( f'type(val_loader), ``{type(val_loader)}``' )
+
+# 1/0
 
 log.debug( f'train_dataset, ``{train_dataset}``' )
 log.debug( f'val_dataset, ``{val_dataset}``' )
@@ -95,7 +99,7 @@ fig = plt.figure(figsize=(25, 4))
 
 for idx in np.arange(20):
     log.debug( f'idx, ``{idx}``' )
-    ax = fig.add_subplot(2, 10, idx+1, xticks=[], yticks=[])
+    ax = fig.add_subplot(2, 10, idx+1, xticks=[], yticks=[])  # type: ignore -- this seems ok from the documentation: <https://www.mathworks.com/help/matlab/ref/subplot.html>
     plt.imshow(im_convert(images[idx]))
     ax.set_title(classes[labels[idx].item()])
     
@@ -133,7 +137,9 @@ for param in model.parameters():
 """
 
 ## Replace the last layer of the classifier with our current 5-class classifier
-n_inputs = model.classifier[6].in_features
+n_inputs: int = model.classifier[6].in_features  # type: ignore -- the type-checker thinks this is returning a type "Tensor | Module", but it's returning an int
+# log.debug( f'type(n_inputs), ``{type(n_inputs)}``' )
+# log.debug( f'n_inputs, ``{n_inputs}``' )
 last_layer = nn.Linear(n_inputs, len(classes))
 model.classifier[6] = last_layer
 model.to(device)
@@ -184,7 +190,34 @@ val_running_loss_history = []
 val_running_corrects_history = []
 class_total = list(0. for i in range(5))
 
-for e in range(epochs):
+"""
+`epochs` was initialized at the top of the file as `epochs = 10`
+
+I asked chatGPT "what is an epoch hyper-parameter in the context of neural-networks?"; it responded...
+
+"
+In the context of neural networks, an epoch is a hyperparameter that
+represents the number of times the entire training dataset is passed
+through the network during the training process. Each epoch consists of
+multiple iterations, with one iteration being the process of feeding a
+batch of training samples into the network, updating the weights, and
+calculating the loss.
+
+The epoch hyperparameter is important because it affects the model's
+training time and performance. Too few epochs may result in
+underfitting, where the model does not learn the underlying patterns in
+the data well enough. Conversely, too many epochs may result in
+overfitting, where the model becomes too specialized to the training
+data and performs poorly on new, unseen data.
+
+In practice, the optimal number of epochs depends on factors such as the
+complexity of the model, the size of the training dataset, and the
+chosen learning rate. It is common to use techniques like early stopping
+or cross-validation to find the best number of epochs for a specific
+problem, preventing overfitting while achieving good performance.
+"
+"""
+for e in range( epochs ):
   
   running_loss = 0.0
   running_corrects = 0.0
@@ -204,10 +237,18 @@ for e in range(epochs):
     _, preds = torch.max(outputs, 1)
     running_loss += loss.item()
     running_corrects += torch.sum(preds == labels.data)
+    log.debug( f'type(running_corrects), ``{type(running_corrects)}``' )
+    log.debug( f'running_corrects, ``{running_corrects}``' )
+
+    # 1/0  # for testing
 
   else:
     with torch.no_grad():
       for val_inputs, val_labels in val_loader:
+        """
+        val_loader is a  pytorch DataLoader object, from the dataset loaded from the image-folder 'flower_photos/test'
+        """
+        ## herezz -- next: check the type of val_inputs, val_labels
         val_inputs = val_inputs.to(device)
         val_labels = val_labels.to(device)
         val_outputs = model(val_inputs)
