@@ -78,12 +78,12 @@ log.debug( f'val_dataset, ``{val_dataset}``' )
 ## view some images -------------------------------------------------
 
 def im_convert( tensor ):
-  """ To visualize some sample images. """
-  image = tensor.cpu().clone().detach().numpy()
-  image = image.transpose(1, 2, 0)
-  image = image * np.array((0.5, 0.5, 0.5)) + np.array((0.5, 0.5, 0.5))
-  image = image.clip(0, 1)
-  return image
+    """ To visualize some sample images. """
+    image = tensor.cpu().clone().detach().numpy()
+    image = image.transpose(1, 2, 0)
+    image = image * np.array((0.5, 0.5, 0.5)) + np.array((0.5, 0.5, 0.5))
+    image = image.clip(0, 1)
+    return image
 
 classes = ('daisy', 'dandelion', 'roses', 'sunflowers', 'tulips')
 
@@ -173,4 +173,61 @@ Feel free to use up to ten paragraphs.
     In our hill example, "first-order moment estimation" is like feeling the slope of the ground to determine which way is downhill. It tells you the average direction that the model's parameters should be adjusted. "Second-order moment estimation" is like feeling the bumps and dips in the ground, which helps you understand how quickly the slope is changing. Combining these two pieces of information can help the optimizer make better adjustments to the model's parameters.
 - To sum up, when training a machine learning model, we need a way to measure how well the model is doing (loss function) and a method to help it improve (optimizer). In this case, the cross-entropy loss function measures the difference between the model's predictions and the correct answers for classification problems, and the Adam optimizer uses the stochastic gradient descent technique, along with first and second-order moment estimation, to make smart adjustments to the model's parameters. All of these concepts work together to help the model learn and make better predictions.
 """
-log.debug( 'hereZZZ' )
+
+
+## Training the network ---------------------------------------------
+
+# keep track of loss and accuracy
+running_loss_history = []
+running_corrects_history = []
+val_running_loss_history = []
+val_running_corrects_history = []
+class_total = list(0. for i in range(5))
+
+for e in range(epochs):
+  
+  running_loss = 0.0
+  running_corrects = 0.0
+  val_running_loss = 0.0
+  val_running_corrects = 0.0
+  
+  for inputs, labels in train_loader:
+    inputs = inputs.to(device)
+    labels = labels.to(device)
+    outputs = model(inputs)
+    loss = criterion(outputs, labels)
+    
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    
+    _, preds = torch.max(outputs, 1)
+    running_loss += loss.item()
+    running_corrects += torch.sum(preds == labels.data)
+
+  else:
+    with torch.no_grad():
+      for val_inputs, val_labels in val_loader:
+        val_inputs = val_inputs.to(device)
+        val_labels = val_labels.to(device)
+        val_outputs = model(val_inputs)
+        val_loss = criterion(val_outputs, val_labels)
+        
+        _, val_preds = torch.max(val_outputs, 1)
+        val_running_loss += val_loss.item()
+        val_running_corrects += torch.sum(val_preds == val_labels.data)
+      
+    epoch_loss = running_loss/len(train_loader.dataset)
+    epoch_acc = running_corrects.float()/ len(train_loader.dataset)
+    running_loss_history.append(epoch_loss)
+    running_corrects_history.append(epoch_acc)
+    
+    val_epoch_loss = val_running_loss/len(val_loader.dataset)
+    val_epoch_acc = val_running_corrects.float()/ len(val_loader.dataset)
+    val_running_loss_history.append(val_epoch_loss)
+    val_running_corrects_history.append(val_epoch_acc)
+    print('epoch :', (e+1))
+    print('training loss: {:.4f}, acc {:.4f} '.format(epoch_loss, epoch_acc.item()))
+    print('validation loss: {:.4f}, validation acc {:.4f} '.format(val_epoch_loss, val_epoch_acc.item()))
+
+## end of "Training the network"
